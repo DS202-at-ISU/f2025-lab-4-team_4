@@ -540,9 +540,13 @@ head(HallOfFameUpdated, 10)</code></pre>
 ## 8  abreubo01   2025   BBWAA     394    296    77        N   Player        &lt;NA&gt;
 ## 9  adamsba01   1937   BBWAA     201    151     8        N   Player        &lt;NA&gt;
 ## 10 adamsba01   1938   BBWAA     262    197    11        N   Player        &lt;NA&gt;</code></pre>
-<pre class="r"><code>#nrow(HallOfFameUpdated) == nrow(HallOfFame) + nrow(hof_2025)</code></pre>
+<pre class="r"><code>#nrow(HallOfFameUpdated) == nrow(HallOfFame) + nrow(hof_2025)
+
+#HallOfFameUpdated |&gt;
+#  filter(yearID == &#39;2025&#39;) |&gt;
+#  arrange(playerID)</code></pre>
 <p>Now to write the CSV:</p>
-<pre class="r"><code>write_csv(HallOfFameUpdated, file=&quot;HallOfFameUpdated.csv&quot;)</code></pre>
+<pre class="r"><code>write_csv(hof_2025, file=&quot;HallOfFame2025.csv&quot;)</code></pre>
 
 
 

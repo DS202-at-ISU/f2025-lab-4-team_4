@@ -122,6 +122,10 @@ HallOfFameUpdated <- rbind(HallOfFame, hof_2025)
 head(HallOfFameUpdated, 10)
 
 #nrow(HallOfFameUpdated) == nrow(HallOfFame) + nrow(hof_2025)
+
+#HallOfFameUpdated |>
+#  filter(yearID == '2025') |>
+#  arrange(playerID)
  
 ```
 
@@ -129,6 +133,6 @@ Now to write the CSV:
 
 ```{r}
 
-write_csv(HallOfFameUpdated, file="HallOfFameUpdated.csv")
+write_csv(hof_2025, file="HallOfFame2025.csv")
 
 ```
