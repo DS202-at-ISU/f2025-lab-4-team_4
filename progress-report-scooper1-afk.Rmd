@@ -9,3 +9,69 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+#Load packages
+library(rvest)
+library(dplyr)
+library(stringr)
+library(Lahman)
+head(People)
+
+# URL for 2025 HOF voting
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+
+# Read page
+page <- read_html(url)
+
+# Extract all tables
+tables <- page %>% html_table(fill = TRUE)
+
+# The correct table is usually the second one
+raw_2025 <- tables[[1]]
+
+# Use first row as column names and remove that row
+colnames(raw_2025) <- raw_2025[1, ]
+raw_2025 <- raw_2025[-1, ]
+
+# Make column names unique 
+colnames(raw_2025) <- make.names(colnames(raw_2025), unique = TRUE)
+
+# Inspect column names
+names(raw_2025)
+
+# List of numeric columns to convert 
+numeric_cols <- intersect(
+  c("Votes", "X.vote", "HOFm", "HOFs", "Yrs", "WAR", "WAR7", "JAWS"),
+  names(raw_2025)
+)
+
+# Convert numeric columns safely
+clean_2025 <- raw_2025 %>%
+  mutate(across(all_of(numeric_cols), ~ as.numeric(str_replace_all(., "[,%]", ""))))
+
+# Create player lookup table from Lahman 
+player_lookup <- People %>%
+  select(playerID, nameFirst, nameLast) %>%
+  mutate(Name = paste(nameFirst, nameLast))
+
+# Join scraped data with Lahman to get playerID 
+hof_2025_lahman <- clean_2025 %>%
+  left_join(player_lookup, by = "Name") %>%
+  mutate(
+    yearID = 2025,
+    votedBy = "BBWAA",
+    ballots = HOFm,
+    needed = HOFs,
+    votes = Votes,
+    inducted = ifelse(votes / ballots >= 0.75, "Y", "N"),
+    category = "Player",
+    needed_note = NA
+  ) %>%
+  select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
+
+# View final Lahman-compatible table
+hof_2025_lahman
+
+# Commenting out writing csv to show I know how to do it, but we are not using my result. 
+#write.csv(hof_2025_lahman, "HallOfFame_2025_scraped.csv", row.names = FALSE)
+```
