@@ -30,6 +30,9 @@ Required information in Hall Of Fame dataset:
 - category
 - needed_note
 
+
+Now to begin Webscraping from baseball-reference.com:
+
 ```{r}
 
 html <- read_html("https://www.baseball-reference.com/awards/hof_2025.shtml")
@@ -66,5 +69,66 @@ hof_2025 <- hof_2025 |>
 #select important columns
 
 head(hof_2025, 3)
+
+```
+From baseball-reference.com : 394 Total Ballots, 296 votes required for induction
+
+Now to transform the data:
+
+```{r}
+
+colnames(People)
+
+players <- People |>
+  mutate(
+    Player = paste(nameFirst, nameLast)
+  ) |>
+  select(Player, playerID)
+
+hof_2025 <- hof_2025 |>
+  mutate(
+    Player = gsub("X-", "", Name), 
+    yearID = 2025,
+    votedBy = 'BBWAA',
+    ballots = 394,
+    needed = 296,
+    votes = as.numeric(Votes),
+    inducted = ifelse(votes >= needed, 'Y', 'N'),
+    category = NA,
+    needed_note = NA
+  ) |>
+  select(Player, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
+hof_2025
+
+#replace player names with accent marks to fit Lahman People dataset
+
+hof_2025[4, 'Player'] <- "Carlos Beltran"
+hof_2025[10, 'Player'] <- "Felix Hernandez"
+hof_2025[16, 'Player'] <- "Francisco Rodriguez"
+hof_2025[25, 'Player'] <- "Carlos Gonzalez"
+hof_2025[28, 'Player'] <- "Hanley Ramirez"
+
+hof_2025 <- hof_2025 |>
+  left_join(players, by = 'Player')
+  
+hof_2025 <- hof_2025 |>
+  select(
+    playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note
+  )
+
+
+HallOfFameUpdated <- rbind(HallOfFame, hof_2025)
+
+head(HallOfFameUpdated, 10)
+
+#nrow(HallOfFameUpdated) == nrow(HallOfFame) + nrow(hof_2025)
+ 
+```
+
+Now to write the CSV:
+
+```{r}
+
+write_csv(HallOfFameUpdated, file="HallOfFameUpdated.csv")
 
 ```
