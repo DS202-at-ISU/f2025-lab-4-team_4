@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-# --- Load packages ---
+#Load packages
 library(rvest)
 library(dplyr)
 library(stringr)
@@ -69,11 +69,7 @@ hof_2025_lahman <- clean_2025 %>%
   ) %>%
   select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
 
-# --- View final Lahman-compatible table ---
+# View final Lahman-compatible table
 hof_2025_lahman
 
 ```
-
-
-
-

@@ -357,7 +357,7 @@ display: none;
 </div>
 
 
-<pre class="r"><code># --- Load packages ---
+<pre class="r"><code>#Load packages
 library(rvest)
 library(dplyr)</code></pre>
 <pre><code>## 
@@ -458,7 +458,7 @@ hof_2025_lahman &lt;- clean_2025 %&gt;%
   ) %&gt;%
   select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
 
-# --- View final Lahman-compatible table ---
+# View final Lahman-compatible table
 hof_2025_lahman</code></pre>
 <pre><code>## # A tibble: 28 × 9
 ##    playerID  yearID votedBy ballots needed votes inducted category needed_note
