@@ -29,3 +29,42 @@ Required information in Hall Of Fame dataset:
 - inducted (Y, N)
 - category
 - needed_note
+
+```{r}
+
+html <- read_html("https://www.baseball-reference.com/awards/hof_2025.shtml")
+
+#open up the html file on r
+
+hof_table <- html_elements(html, '#hof_BBWAA')
+
+#select the table from selector_gadget
+
+hof_table_2025 <- html_table(hof_table)
+
+#read the table
+
+hof_2025 <- data.frame(hof_table_2025)
+
+#make the table a data frame
+
+columns <- hof_2025[1, ]
+
+colnames(hof_2025) <- columns
+
+#rename column names to first row
+
+hof_2025 <- hof_2025[-1, ]
+
+#remove first row
+
+hof_2025 <- hof_2025 |>
+  select(
+    Name, Votes
+  )
+
+#select important columns
+
+head(hof_2025, 3)
+
+```

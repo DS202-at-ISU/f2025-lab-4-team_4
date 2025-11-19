@@ -382,6 +382,44 @@ library(tidyverse)</code></pre>
 votedBy - ballots (Total Number Cast) - needed (Total Number to be
 Inducted) - votes (Total Number of Votes received) - inducted (Y, N) -
 category - needed_note</p>
+<pre class="r"><code>html &lt;- read_html(&quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;)
+
+#open up the html file on r
+
+hof_table &lt;- html_elements(html, &#39;#hof_BBWAA&#39;)
+
+#select the table from selector_gadget
+
+hof_table_2025 &lt;- html_table(hof_table)
+
+#read the table
+
+hof_2025 &lt;- data.frame(hof_table_2025)
+
+#make the table a data frame
+
+columns &lt;- hof_2025[1, ]
+
+colnames(hof_2025) &lt;- columns
+
+#rename column names to first row
+
+hof_2025 &lt;- hof_2025[-1, ]
+
+#remove first row
+
+hof_2025 &lt;- hof_2025 |&gt;
+  select(
+    Name, Votes
+  )
+
+#select important columns
+
+head(hof_2025, 3)</code></pre>
+<pre><code>##            Name Votes
+## 2 Ichiro Suzuki   393
+## 3   CC Sabathia   342
+## 4  Billy Wagner   325</code></pre>
 
 
 
