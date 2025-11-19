@@ -72,4 +72,6 @@ hof_2025_lahman <- clean_2025 %>%
 # View final Lahman-compatible table
 hof_2025_lahman
 
+# Commenting out writing csv to show I know how to do it, but we are not using my result. 
+#write.csv(hof_2025_lahman, "HallOfFame_2025_scraped.csv", row.names = FALSE)
 ```
