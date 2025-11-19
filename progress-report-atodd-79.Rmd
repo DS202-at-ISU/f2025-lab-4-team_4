@@ -9,3 +9,23 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+##Progress Report
+
+```{r}
+library(rvest)
+library(tidyverse)
+library(Lahman)
+
+head(HallOfFame, 3)
+```
+
+Required information in Hall Of Fame dataset:
+- playerID
+- yearID
+- votedBy
+- ballots (Total Number Cast)
+- needed (Total Number to be Inducted)
+- votes (Total Number of Votes received)
+- inducted (Y, N)
+- category
+- needed_note
