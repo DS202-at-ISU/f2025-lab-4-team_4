@@ -10,3 +10,43 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
+
+
+
+```{r}
+library(rvest)
+library(Lahman)
+library(dplyr)
+head(HallOfFame, 3)
+#head(People, 3)
+url <- "https://www.baseball-reference.com/awards/hof_2025.shtml"
+html <- read_html(url)
+tables <- html_table(html)
+data <- tables[[1]]
+actual_col_names <- data[1, ]
+colnames(data) <- actual_col_names
+data <- data[-1, ]
+
+data$Name <- gsub("X-", "", data$Name)
+
+data <- data %>%
+  select(Name, Votes, `%vote`)
+
+players <- People %>%
+  select(playerID, nameFirst, nameLast) %>%
+  mutate(Name = paste(nameFirst, nameLast, sep = " ")) %>%
+  select(playerID, Name)
+
+data <- data %>%
+  left_join(players, by = "Name") %>%
+  mutate(index = row_number())
+
+data$YearID <- 2025
+data$votedBy <- "BBWAA"
+data$ballots <- 394
+data$needed <- 296
+data$category <- "Player"
+  
+head(data)
+
+```

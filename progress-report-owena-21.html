@@ -359,6 +359,62 @@ display: none;
 
 <div id="r-markdown" class="section level2">
 <h2>R Markdown</h2>
+<pre class="r"><code>library(rvest)
+library(Lahman)</code></pre>
+<pre><code>## Warning: package &#39;Lahman&#39; was built under R version 4.5.2</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>head(HallOfFame, 3)</code></pre>
+<pre><code>##    playerID yearID votedBy ballots needed votes inducted category needed_note
+## 1 aaronha01   1982   BBWAA     415    312   406        Y   Player        &lt;NA&gt;
+## 2 abbotji01   2005   BBWAA     516    387    13        N   Player        &lt;NA&gt;
+## 3 abreubo01   2020   BBWAA     397    298    22        N   Player        &lt;NA&gt;</code></pre>
+<pre class="r"><code>#head(People, 3)
+url &lt;- &quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;
+html &lt;- read_html(url)
+tables &lt;- html_table(html)
+data &lt;- tables[[1]]
+actual_col_names &lt;- data[1, ]
+colnames(data) &lt;- actual_col_names
+data &lt;- data[-1, ]
+
+data$Name &lt;- gsub(&quot;X-&quot;, &quot;&quot;, data$Name)
+
+data &lt;- data %&gt;%
+  select(Name, Votes, `%vote`)
+
+players &lt;- People %&gt;%
+  select(playerID, nameFirst, nameLast) %&gt;%
+  mutate(Name = paste(nameFirst, nameLast, sep = &quot; &quot;)) %&gt;%
+  select(playerID, Name)
+
+data &lt;- data %&gt;%
+  left_join(players, by = &quot;Name&quot;) %&gt;%
+  mutate(index = row_number())
+
+data$YearID &lt;- 2025
+data$votedBy &lt;- &quot;BBWAA&quot;
+data$ballots &lt;- 394
+data$needed &lt;- 296
+data$category &lt;- &quot;Player&quot;
+  
+head(data)</code></pre>
+<pre><code>## # A tibble: 6 × 10
+##   Name       Votes `%vote` playerID index YearID votedBy ballots needed category
+##   &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;  &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
+## 1 Ichiro Su… 393   99.7%   suzukic…     1   2025 BBWAA       394    296 Player  
+## 2 CC Sabath… 342   86.8%   sabatcc…     2   2025 BBWAA       394    296 Player  
+## 3 Billy Wag… 325   82.5%   wagnebi…     3   2025 BBWAA       394    296 Player  
+## 4 Carlos Be… 277   70.3%   &lt;NA&gt;         4   2025 BBWAA       394    296 Player  
+## 5 Andruw Jo… 261   66.2%   jonesan…     5   2025 BBWAA       394    296 Player  
+## 6 Chase Utl… 157   39.8%   utleych…     6   2025 BBWAA       394    296 Player</code></pre>
 </div>
 
 
