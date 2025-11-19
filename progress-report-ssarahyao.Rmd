@@ -89,6 +89,8 @@ hof_2025_clean <- hof_2025 %>%
 # Preview final data
 hof_2025_clean
 
+#write.csv(hof_2025_clean, "hof_2025_clean.csv", row.names = FALSE)
+
 ```
 
 
