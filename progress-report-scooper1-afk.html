@@ -357,7 +357,123 @@ display: none;
 </div>
 
 
+<pre class="r"><code># --- Load packages ---
+library(rvest)
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(stringr)
+library(Lahman)
+head(People)</code></pre>
+<pre><code>##    playerID birthYear birthMonth birthDay  birthCity birthCountry birthState
+## 1 aardsda01      1981         12       27     Denver          USA         CO
+## 2 aaronha01      1934          2        5     Mobile          USA         AL
+## 3 aaronto01      1939          8        5     Mobile          USA         AL
+## 4  aasedo01      1954          9        8     Orange          USA         CA
+## 5  abadan01      1972          8       25 Palm Beach          USA         FL
+## 6  abadfe01      1985         12       17  La Romana         D.R.  La Romana
+##   deathYear deathMonth deathDay deathCountry deathState deathCity nameFirst
+## 1        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;     David
+## 2      2021          1       22          USA         GA   Atlanta      Hank
+## 3      1984          8       16          USA         GA   Atlanta    Tommie
+## 4        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;       Don
+## 5        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;      Andy
+## 6        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;  Fernando
+##   nameLast        nameGiven weight height bats throws      debut   bbrefID
+## 1  Aardsma      David Allan    215     75    R      R 2004-04-06 aardsda01
+## 2    Aaron      Henry Louis    180     72    R      R 1954-04-13 aaronha01
+## 3    Aaron       Tommie Lee    190     75    R      R 1962-04-10 aaronto01
+## 4     Aase   Donald William    190     75    R      R 1977-07-26  aasedo01
+## 5     Abad    Fausto Andres    184     73    L      L 2001-09-10  abadan01
+## 6     Abad Fernando Antonio    235     74    L      L 2010-07-28  abadfe01
+##    finalGame  retroID  deathDate  birthDate
+## 1 2015-08-23 aardd001       &lt;NA&gt; 1981-12-27
+## 2 1976-10-03 aaroh101 2021-01-22 1934-02-05
+## 3 1971-09-26 aarot101 1984-08-16 1939-08-05
+## 4 1990-10-03 aased001       &lt;NA&gt; 1954-09-08
+## 5 2006-04-13 abada001       &lt;NA&gt; 1972-08-25
+## 6 2021-10-01 abadf001       &lt;NA&gt; 1985-12-17</code></pre>
+<pre class="r"><code># URL for 2025 HOF voting
+url &lt;- &quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;
 
+# Read page
+page &lt;- read_html(url)
+
+# Extract all tables
+tables &lt;- page %&gt;% html_table(fill = TRUE)
+
+# The correct table is usually the second one
+raw_2025 &lt;- tables[[1]]
+
+# Use first row as column names and remove that row
+colnames(raw_2025) &lt;- raw_2025[1, ]
+raw_2025 &lt;- raw_2025[-1, ]
+
+# Make column names unique 
+colnames(raw_2025) &lt;- make.names(colnames(raw_2025), unique = TRUE)
+
+# Inspect column names
+names(raw_2025)</code></pre>
+<pre><code>##  [1] &quot;Rk&quot;          &quot;Name&quot;        &quot;YoB&quot;         &quot;Votes&quot;       &quot;X.vote&quot;     
+##  [6] &quot;HOFm&quot;        &quot;HOFs&quot;        &quot;Yrs&quot;         &quot;WAR&quot;         &quot;WAR7&quot;       
+## [11] &quot;JAWS&quot;        &quot;Jpos&quot;        &quot;G&quot;           &quot;AB&quot;          &quot;R&quot;          
+## [16] &quot;H&quot;           &quot;HR&quot;          &quot;RBI&quot;         &quot;SB&quot;          &quot;BB&quot;         
+## [21] &quot;BA&quot;          &quot;OBP&quot;         &quot;SLG&quot;         &quot;OPS&quot;         &quot;OPS.&quot;       
+## [26] &quot;W&quot;           &quot;L&quot;           &quot;ERA&quot;         &quot;ERA.&quot;        &quot;WHIP&quot;       
+## [31] &quot;G.1&quot;         &quot;GS&quot;          &quot;SV&quot;          &quot;IP&quot;          &quot;H.1&quot;        
+## [36] &quot;HR.1&quot;        &quot;BB.1&quot;        &quot;SO&quot;          &quot;Pos.Summary&quot;</code></pre>
+<pre class="r"><code># List of numeric columns to convert 
+numeric_cols &lt;- intersect(
+  c(&quot;Votes&quot;, &quot;X.vote&quot;, &quot;HOFm&quot;, &quot;HOFs&quot;, &quot;Yrs&quot;, &quot;WAR&quot;, &quot;WAR7&quot;, &quot;JAWS&quot;),
+  names(raw_2025)
+)
+
+# Convert numeric columns safely
+clean_2025 &lt;- raw_2025 %&gt;%
+  mutate(across(all_of(numeric_cols), ~ as.numeric(str_replace_all(., &quot;[,%]&quot;, &quot;&quot;))))
+
+# Create player lookup table from Lahman 
+player_lookup &lt;- People %&gt;%
+  select(playerID, nameFirst, nameLast) %&gt;%
+  mutate(Name = paste(nameFirst, nameLast))
+
+# Join scraped data with Lahman to get playerID 
+hof_2025_lahman &lt;- clean_2025 %&gt;%
+  left_join(player_lookup, by = &quot;Name&quot;) %&gt;%
+  mutate(
+    yearID = 2025,
+    votedBy = &quot;BBWAA&quot;,
+    ballots = HOFm,
+    needed = HOFs,
+    votes = Votes,
+    inducted = ifelse(votes / ballots &gt;= 0.75, &quot;Y&quot;, &quot;N&quot;),
+    category = &quot;Player&quot;,
+    needed_note = NA
+  ) %&gt;%
+  select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
+
+# --- View final Lahman-compatible table ---
+hof_2025_lahman</code></pre>
+<pre><code>## # A tibble: 28 × 9
+##    playerID  yearID votedBy ballots needed votes inducted category needed_note
+##    &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;lgl&gt;      
+##  1 suzukic01   2025 BBWAA       235     44   393 Y        Player   NA         
+##  2 sabatcc01   2025 BBWAA       128     48   342 Y        Player   NA         
+##  3 wagnebi02   2025 BBWAA       107     24   325 Y        Player   NA         
+##  4 &lt;NA&gt;        2025 BBWAA       126     52   277 Y        Player   NA         
+##  5 jonesan01   2025 BBWAA       109     34   261 Y        Player   NA         
+##  6 utleych01   2025 BBWAA        94     36   157 Y        Player   NA         
+##  7 rodrial01   2025 BBWAA       390     77   146 N        Player   NA         
+##  8 ramirma02   2025 BBWAA       226     69   135 N        Player   NA         
+##  9 pettian01   2025 BBWAA       128     44   110 Y        Player   NA         
+## 10 &lt;NA&gt;        2025 BBWAA        67     31    81 Y        Player   NA         
+## # ℹ 18 more rows</code></pre>
 
 
 
