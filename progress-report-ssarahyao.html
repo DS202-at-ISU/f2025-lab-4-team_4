@@ -9,11 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Selena Cooper" />
+<meta name="author" content="Sarah Yao" />
 
 <meta name="date" content="2025-11-19" />
 
-<title>progress-report-scooper1-afk</title>
+<title>progress-report-ssarahyao</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,14 +350,17 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">progress-report-scooper1-afk</h1>
-<h4 class="author">Selena Cooper</h4>
+<h1 class="title toc-ignore">progress-report-ssarahyao</h1>
+<h4 class="author">Sarah Yao</h4>
 <h4 class="date">2025-11-19</h4>
 
 </div>
 
 
-<pre class="r"><code>#Load packages
+<p>Target structure: | playerFullName | playerID | yearID | votedBy |
+ballots | needed | votes | inducted | category | needed_note |</p>
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
+
 library(rvest)
 library(dplyr)</code></pre>
 <pre><code>## 
@@ -370,112 +373,157 @@ library(dplyr)</code></pre>
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(stringr)
 library(Lahman)
-head(People)</code></pre>
-<pre><code>##    playerID birthYear birthMonth birthDay  birthCity birthCountry birthState
-## 1 aardsda01      1981         12       27     Denver          USA         CO
-## 2 aaronha01      1934          2        5     Mobile          USA         AL
-## 3 aaronto01      1939          8        5     Mobile          USA         AL
-## 4  aasedo01      1954          9        8     Orange          USA         CA
-## 5  abadan01      1972          8       25 Palm Beach          USA         FL
-## 6  abadfe01      1985         12       17  La Romana         D.R.  La Romana
-##   deathYear deathMonth deathDay deathCountry deathState deathCity nameFirst
-## 1        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;     David
-## 2      2021          1       22          USA         GA   Atlanta      Hank
-## 3      1984          8       16          USA         GA   Atlanta    Tommie
-## 4        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;       Don
-## 5        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;      Andy
-## 6        NA         NA       NA         &lt;NA&gt;       &lt;NA&gt;      &lt;NA&gt;  Fernando
-##   nameLast        nameGiven weight height bats throws      debut   bbrefID
-## 1  Aardsma      David Allan    215     75    R      R 2004-04-06 aardsda01
-## 2    Aaron      Henry Louis    180     72    R      R 1954-04-13 aaronha01
-## 3    Aaron       Tommie Lee    190     75    R      R 1962-04-10 aaronto01
-## 4     Aase   Donald William    190     75    R      R 1977-07-26  aasedo01
-## 5     Abad    Fausto Andres    184     73    L      L 2001-09-10  abadan01
-## 6     Abad Fernando Antonio    235     74    L      L 2010-07-28  abadfe01
-##    finalGame  retroID  deathDate  birthDate
-## 1 2015-08-23 aardd001       &lt;NA&gt; 1981-12-27
-## 2 1976-10-03 aaroh101 2021-01-22 1934-02-05
-## 3 1971-09-26 aarot101 1984-08-16 1939-08-05
-## 4 1990-10-03 aased001       &lt;NA&gt; 1954-09-08
-## 5 2006-04-13 abada001       &lt;NA&gt; 1972-08-25
-## 6 2021-10-01 abadf001       &lt;NA&gt; 1985-12-17</code></pre>
-<pre class="r"><code># URL for 2025 HOF voting
-url &lt;- &quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;
 
-# Read page
-page &lt;- read_html(url)
+# Preview Lahman structure
+head(HallOfFame, 3)</code></pre>
+<pre><code>##    playerID yearID votedBy ballots needed votes inducted category needed_note
+## 1 aaronha01   1982   BBWAA     415    312   406        Y   Player        &lt;NA&gt;
+## 2 abbotji01   2005   BBWAA     516    387    13        N   Player        &lt;NA&gt;
+## 3 abreubo01   2020   BBWAA     397    298    22        N   Player        &lt;NA&gt;</code></pre>
+<pre class="r"><code># Open and read HTML table
+html &lt;- read_html(&quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;)
+hof_table &lt;- html_elements(html, &#39;#hof_BBWAA&#39;)
 
-# Extract all tables
-tables &lt;- page %&gt;% html_table(fill = TRUE)
+# Convert html table → data frame
+hof_table_2025 &lt;- html_table(hof_table)
+hof_2025 &lt;- data.frame(hof_table_2025)
 
-# The correct table is usually the second one
-raw_2025 &lt;- tables[[1]]
+# Fix header row
+columns &lt;- hof_2025[1, ]            
+colnames(hof_2025) &lt;- columns        
+hof_2025 &lt;- hof_2025[-1, ]  
 
-# Use first row as column names and remove that row
-colnames(raw_2025) &lt;- raw_2025[1, ]
-raw_2025 &lt;- raw_2025[-1, ]
+# Keep relevant scraped columns
+hof_2025 &lt;- hof_2025 |&gt;
+  select(Name, Votes)
 
-# Make column names unique 
-colnames(raw_2025) &lt;- make.names(colnames(raw_2025), unique = TRUE)
+head(hof_2025, 3)</code></pre>
+<pre><code>##            Name Votes
+## 2 Ichiro Suzuki   393
+## 3   CC Sabathia   342
+## 4  Billy Wagner   325</code></pre>
+<pre class="r"><code># Clean Name column for matching
+hof_2025 &lt;- hof_2025 %&gt;%
+  mutate(
+    playerFullName = Name,
+    cleanName = tolower(playerFullName),
+    Votes = as.numeric(Votes)
+  )
 
-# Inspect column names
-names(raw_2025)</code></pre>
-<pre><code>##  [1] &quot;Rk&quot;          &quot;Name&quot;        &quot;YoB&quot;         &quot;Votes&quot;       &quot;X.vote&quot;     
-##  [6] &quot;HOFm&quot;        &quot;HOFs&quot;        &quot;Yrs&quot;         &quot;WAR&quot;         &quot;WAR7&quot;       
-## [11] &quot;JAWS&quot;        &quot;Jpos&quot;        &quot;G&quot;           &quot;AB&quot;          &quot;R&quot;          
-## [16] &quot;H&quot;           &quot;HR&quot;          &quot;RBI&quot;         &quot;SB&quot;          &quot;BB&quot;         
-## [21] &quot;BA&quot;          &quot;OBP&quot;         &quot;SLG&quot;         &quot;OPS&quot;         &quot;OPS.&quot;       
-## [26] &quot;W&quot;           &quot;L&quot;           &quot;ERA&quot;         &quot;ERA.&quot;        &quot;WHIP&quot;       
-## [31] &quot;G.1&quot;         &quot;GS&quot;          &quot;SV&quot;          &quot;IP&quot;          &quot;H.1&quot;        
-## [36] &quot;HR.1&quot;        &quot;BB.1&quot;        &quot;SO&quot;          &quot;Pos.Summary&quot;</code></pre>
-<pre class="r"><code># List of numeric columns to convert 
-numeric_cols &lt;- intersect(
-  c(&quot;Votes&quot;, &quot;X.vote&quot;, &quot;HOFm&quot;, &quot;HOFs&quot;, &quot;Yrs&quot;, &quot;WAR&quot;, &quot;WAR7&quot;, &quot;JAWS&quot;),
-  names(raw_2025)
-)
+# Prepare Lahman Master table
+people &lt;- People %&gt;%
+  mutate(
+    playerFullName_lahman = paste(nameFirst, nameLast),
+    cleanName = tolower(playerFullName_lahman)
+  ) %&gt;%
+  select(playerID, cleanName)
 
-# Convert numeric columns safely
-clean_2025 &lt;- raw_2025 %&gt;%
-  mutate(across(all_of(numeric_cols), ~ as.numeric(str_replace_all(., &quot;[,%]&quot;, &quot;&quot;))))
+# Match scraped names to Lahman playerIDs
+hof_2025 &lt;- hof_2025 %&gt;%
+  left_join(people, by = &quot;cleanName&quot;)
 
-# Create player lookup table from Lahman 
-player_lookup &lt;- People %&gt;%
-  select(playerID, nameFirst, nameLast) %&gt;%
-  mutate(Name = paste(nameFirst, nameLast))
+# Check unmatched players
+hof_2025 %&gt;% filter(is.na(playerID))</code></pre>
+<pre><code>##                   Name Votes      playerFullName           cleanName playerID
+## 1       Carlos Beltrán   277      Carlos Beltrán      carlos beltrán     &lt;NA&gt;
+## 2      Félix Hernández    81     Félix Hernández     félix hernández     &lt;NA&gt;
+## 3  Francisco Rodríguez    40 Francisco Rodríguez francisco rodríguez     &lt;NA&gt;
+## 4        X-Ian Kinsler    10       X-Ian Kinsler       x-ian kinsler     &lt;NA&gt;
+## 5     X-Russell Martin     9    X-Russell Martin    x-russell martin     &lt;NA&gt;
+## 6       X-Brian McCann     7      X-Brian McCann      x-brian mccann     &lt;NA&gt;
+## 7    X-Troy Tulowitzki     4   X-Troy Tulowitzki   x-troy tulowitzki     &lt;NA&gt;
+## 8         X-Adam Jones     3        X-Adam Jones        x-adam jones     &lt;NA&gt;
+## 9  X-Curtis Granderson     3 X-Curtis Granderson x-curtis granderson     &lt;NA&gt;
+## 10   X-Carlos González     2   X-Carlos González   x-carlos gonzález     &lt;NA&gt;
+## 11       X-Ben Zobrist     0       X-Ben Zobrist       x-ben zobrist     &lt;NA&gt;
+## 12   X-Fernando Rodney     0   X-Fernando Rodney   x-fernando rodney     &lt;NA&gt;
+## 13    X-Hanley Ramírez     0    X-Hanley Ramírez    x-hanley ramírez     &lt;NA&gt;</code></pre>
+<pre class="r"><code># Scrape ballots cast (from page header)
+ballot_text &lt;- html %&gt;% html_nodes(&quot;p&quot;) %&gt;% html_text()
+ballots_line &lt;- ballot_text[str_detect(ballot_text, &quot;Ballots&quot;)]
+ballots &lt;- str_extract(ballots_line, &quot;\\d+&quot;) %&gt;% as.numeric()
 
-# Join scraped data with Lahman to get playerID 
-hof_2025_lahman &lt;- clean_2025 %&gt;%
-  left_join(player_lookup, by = &quot;Name&quot;) %&gt;%
+# Create Lahman-style fields
+ballots &lt;- 394 # found on MLB website
+
+hof_2025_clean &lt;- hof_2025 %&gt;%
   mutate(
     yearID = 2025,
     votedBy = &quot;BBWAA&quot;,
-    ballots = HOFm,
-    needed = HOFs,
+    ballots = ballots,
+    needed = ceiling(0.75 * ballots),
     votes = Votes,
-    inducted = ifelse(votes / ballots &gt;= 0.75, &quot;Y&quot;, &quot;N&quot;),
+    inducted = ifelse(votes &gt;= needed, &quot;Y&quot;, &quot;N&quot;),
     category = &quot;Player&quot;,
     needed_note = NA
   ) %&gt;%
-  select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
+  select(
+    playerFullName, playerID, yearID, votedBy,
+    ballots, needed, votes, inducted,
+    category, needed_note
+  )
 
-# View final Lahman-compatible table
-hof_2025_lahman</code></pre>
-<pre><code>## # A tibble: 28 × 9
-##    playerID  yearID votedBy ballots needed votes inducted category needed_note
-##    &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;lgl&gt;      
-##  1 suzukic01   2025 BBWAA       235     44   393 Y        Player   NA         
-##  2 sabatcc01   2025 BBWAA       128     48   342 Y        Player   NA         
-##  3 wagnebi02   2025 BBWAA       107     24   325 Y        Player   NA         
-##  4 &lt;NA&gt;        2025 BBWAA       126     52   277 Y        Player   NA         
-##  5 jonesan01   2025 BBWAA       109     34   261 Y        Player   NA         
-##  6 utleych01   2025 BBWAA        94     36   157 Y        Player   NA         
-##  7 rodrial01   2025 BBWAA       390     77   146 N        Player   NA         
-##  8 ramirma02   2025 BBWAA       226     69   135 N        Player   NA         
-##  9 pettian01   2025 BBWAA       128     44   110 Y        Player   NA         
-## 10 &lt;NA&gt;        2025 BBWAA        67     31    81 Y        Player   NA         
-## # ℹ 18 more rows</code></pre>
-<pre class="r"><code># Commenting out writing csv to show I know how to do it, but we are not using my result. 
-#write.csv(hof_2025_lahman, &quot;HallOfFame_2025_scraped.csv&quot;, row.names = FALSE)</code></pre>
+# Preview final data
+hof_2025_clean</code></pre>
+<pre><code>##         playerFullName  playerID yearID votedBy ballots needed votes inducted
+## 1        Ichiro Suzuki suzukic01   2025   BBWAA     394    296   393        Y
+## 2          CC Sabathia sabatcc01   2025   BBWAA     394    296   342        Y
+## 3         Billy Wagner wagnebi02   2025   BBWAA     394    296   325        Y
+## 4       Carlos Beltrán      &lt;NA&gt;   2025   BBWAA     394    296   277        N
+## 5         Andruw Jones jonesan01   2025   BBWAA     394    296   261        N
+## 6          Chase Utley utleych01   2025   BBWAA     394    296   157        N
+## 7       Alex Rodriguez rodrial01   2025   BBWAA     394    296   146        N
+## 8        Manny Ramirez ramirma02   2025   BBWAA     394    296   135        N
+## 9        Andy Pettitte pettian01   2025   BBWAA     394    296   110        N
+## 10     Félix Hernández      &lt;NA&gt;   2025   BBWAA     394    296    81        N
+## 11         Bobby Abreu abreubo01   2025   BBWAA     394    296    77        N
+## 12       Jimmy Rollins rolliji01   2025   BBWAA     394    296    71        N
+## 13        Omar Vizquel vizquom01   2025   BBWAA     394    296    70        N
+## 14      Dustin Pedroia pedrodu01   2025   BBWAA     394    296    47        N
+## 15        Mark Buehrle buehrma01   2025   BBWAA     394    296    45        N
+## 16 Francisco Rodríguez      &lt;NA&gt;   2025   BBWAA     394    296    40        N
+## 17        David Wright wrighda03   2025   BBWAA     394    296    32        N
+## 18        Torii Hunter hunteto01   2025   BBWAA     394    296    20        N
+## 19       X-Ian Kinsler      &lt;NA&gt;   2025   BBWAA     394    296    10        N
+## 20    X-Russell Martin      &lt;NA&gt;   2025   BBWAA     394    296     9        N
+## 21      X-Brian McCann      &lt;NA&gt;   2025   BBWAA     394    296     7        N
+## 22   X-Troy Tulowitzki      &lt;NA&gt;   2025   BBWAA     394    296     4        N
+## 23        X-Adam Jones      &lt;NA&gt;   2025   BBWAA     394    296     3        N
+## 24 X-Curtis Granderson      &lt;NA&gt;   2025   BBWAA     394    296     3        N
+## 25   X-Carlos González      &lt;NA&gt;   2025   BBWAA     394    296     2        N
+## 26       X-Ben Zobrist      &lt;NA&gt;   2025   BBWAA     394    296     0        N
+## 27   X-Fernando Rodney      &lt;NA&gt;   2025   BBWAA     394    296     0        N
+## 28    X-Hanley Ramírez      &lt;NA&gt;   2025   BBWAA     394    296     0        N
+##    category needed_note
+## 1    Player          NA
+## 2    Player          NA
+## 3    Player          NA
+## 4    Player          NA
+## 5    Player          NA
+## 6    Player          NA
+## 7    Player          NA
+## 8    Player          NA
+## 9    Player          NA
+## 10   Player          NA
+## 11   Player          NA
+## 12   Player          NA
+## 13   Player          NA
+## 14   Player          NA
+## 15   Player          NA
+## 16   Player          NA
+## 17   Player          NA
+## 18   Player          NA
+## 19   Player          NA
+## 20   Player          NA
+## 21   Player          NA
+## 22   Player          NA
+## 23   Player          NA
+## 24   Player          NA
+## 25   Player          NA
+## 26   Player          NA
+## 27   Player          NA
+## 28   Player          NA</code></pre>
+<pre class="r"><code>#write.csv(hof_2025_clean, &quot;hof_2025_clean.csv&quot;, row.names = FALSE)</code></pre>
 
 
 

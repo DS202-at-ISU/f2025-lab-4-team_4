@@ -382,6 +382,171 @@ library(tidyverse)</code></pre>
 votedBy - ballots (Total Number Cast) - needed (Total Number to be
 Inducted) - votes (Total Number of Votes received) - inducted (Y, N) -
 category - needed_note</p>
+<p>Now to begin Webscraping from baseball-reference.com:</p>
+<pre class="r"><code>html &lt;- read_html(&quot;https://www.baseball-reference.com/awards/hof_2025.shtml&quot;)
+
+#open up the html file on r
+
+hof_table &lt;- html_elements(html, &#39;#hof_BBWAA&#39;)
+
+#select the table from selector_gadget
+
+hof_table_2025 &lt;- html_table(hof_table)
+
+#read the table
+
+hof_2025 &lt;- data.frame(hof_table_2025)
+
+#make the table a data frame
+
+columns &lt;- hof_2025[1, ]
+
+colnames(hof_2025) &lt;- columns
+
+#rename column names to first row
+
+hof_2025 &lt;- hof_2025[-1, ]
+
+#remove first row
+
+hof_2025 &lt;- hof_2025 |&gt;
+  select(
+    Name, Votes
+  )
+
+#select important columns
+
+head(hof_2025, 3)</code></pre>
+<pre><code>##            Name Votes
+## 2 Ichiro Suzuki   393
+## 3   CC Sabathia   342
+## 4  Billy Wagner   325</code></pre>
+<p>From baseball-reference.com : 394 Total Ballots, 296 votes required
+for induction</p>
+<p>Now to transform the data:</p>
+<pre class="r"><code>colnames(People)</code></pre>
+<pre><code>##  [1] &quot;playerID&quot;     &quot;birthYear&quot;    &quot;birthMonth&quot;   &quot;birthDay&quot;     &quot;birthCity&quot;   
+##  [6] &quot;birthCountry&quot; &quot;birthState&quot;   &quot;deathYear&quot;    &quot;deathMonth&quot;   &quot;deathDay&quot;    
+## [11] &quot;deathCountry&quot; &quot;deathState&quot;   &quot;deathCity&quot;    &quot;nameFirst&quot;    &quot;nameLast&quot;    
+## [16] &quot;nameGiven&quot;    &quot;weight&quot;       &quot;height&quot;       &quot;bats&quot;         &quot;throws&quot;      
+## [21] &quot;debut&quot;        &quot;bbrefID&quot;      &quot;finalGame&quot;    &quot;retroID&quot;      &quot;deathDate&quot;   
+## [26] &quot;birthDate&quot;</code></pre>
+<pre class="r"><code>players &lt;- People |&gt;
+  mutate(
+    Player = paste(nameFirst, nameLast)
+  ) |&gt;
+  select(Player, playerID)
+
+hof_2025 &lt;- hof_2025 |&gt;
+  mutate(
+    Player = gsub(&quot;X-&quot;, &quot;&quot;, Name), 
+    yearID = 2025,
+    votedBy = &#39;BBWAA&#39;,
+    ballots = 394,
+    needed = 296,
+    votes = as.numeric(Votes),
+    inducted = ifelse(votes &gt;= needed, &#39;Y&#39;, &#39;N&#39;),
+    category = NA,
+    needed_note = NA
+  ) |&gt;
+  select(Player, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
+hof_2025</code></pre>
+<pre><code>##                 Player yearID votedBy ballots needed votes inducted category
+## 2        Ichiro Suzuki   2025   BBWAA     394    296   393        Y       NA
+## 3          CC Sabathia   2025   BBWAA     394    296   342        Y       NA
+## 4         Billy Wagner   2025   BBWAA     394    296   325        Y       NA
+## 5       Carlos Beltrán   2025   BBWAA     394    296   277        N       NA
+## 6         Andruw Jones   2025   BBWAA     394    296   261        N       NA
+## 7          Chase Utley   2025   BBWAA     394    296   157        N       NA
+## 8       Alex Rodriguez   2025   BBWAA     394    296   146        N       NA
+## 9        Manny Ramirez   2025   BBWAA     394    296   135        N       NA
+## 10       Andy Pettitte   2025   BBWAA     394    296   110        N       NA
+## 11     Félix Hernández   2025   BBWAA     394    296    81        N       NA
+## 12         Bobby Abreu   2025   BBWAA     394    296    77        N       NA
+## 13       Jimmy Rollins   2025   BBWAA     394    296    71        N       NA
+## 14        Omar Vizquel   2025   BBWAA     394    296    70        N       NA
+## 15      Dustin Pedroia   2025   BBWAA     394    296    47        N       NA
+## 16        Mark Buehrle   2025   BBWAA     394    296    45        N       NA
+## 17 Francisco Rodríguez   2025   BBWAA     394    296    40        N       NA
+## 18        David Wright   2025   BBWAA     394    296    32        N       NA
+## 19        Torii Hunter   2025   BBWAA     394    296    20        N       NA
+## 20         Ian Kinsler   2025   BBWAA     394    296    10        N       NA
+## 21      Russell Martin   2025   BBWAA     394    296     9        N       NA
+## 22        Brian McCann   2025   BBWAA     394    296     7        N       NA
+## 23     Troy Tulowitzki   2025   BBWAA     394    296     4        N       NA
+## 24          Adam Jones   2025   BBWAA     394    296     3        N       NA
+## 25   Curtis Granderson   2025   BBWAA     394    296     3        N       NA
+## 26     Carlos González   2025   BBWAA     394    296     2        N       NA
+## 27         Ben Zobrist   2025   BBWAA     394    296     0        N       NA
+## 28     Fernando Rodney   2025   BBWAA     394    296     0        N       NA
+## 29      Hanley Ramírez   2025   BBWAA     394    296     0        N       NA
+##    needed_note
+## 2           NA
+## 3           NA
+## 4           NA
+## 5           NA
+## 6           NA
+## 7           NA
+## 8           NA
+## 9           NA
+## 10          NA
+## 11          NA
+## 12          NA
+## 13          NA
+## 14          NA
+## 15          NA
+## 16          NA
+## 17          NA
+## 18          NA
+## 19          NA
+## 20          NA
+## 21          NA
+## 22          NA
+## 23          NA
+## 24          NA
+## 25          NA
+## 26          NA
+## 27          NA
+## 28          NA
+## 29          NA</code></pre>
+<pre class="r"><code>#replace player names with accent marks to fit Lahman People dataset
+
+hof_2025[4, &#39;Player&#39;] &lt;- &quot;Carlos Beltran&quot;
+hof_2025[10, &#39;Player&#39;] &lt;- &quot;Felix Hernandez&quot;
+hof_2025[16, &#39;Player&#39;] &lt;- &quot;Francisco Rodriguez&quot;
+hof_2025[25, &#39;Player&#39;] &lt;- &quot;Carlos Gonzalez&quot;
+hof_2025[28, &#39;Player&#39;] &lt;- &quot;Hanley Ramirez&quot;
+
+hof_2025 &lt;- hof_2025 |&gt;
+  left_join(players, by = &#39;Player&#39;)
+  
+hof_2025 &lt;- hof_2025 |&gt;
+  select(
+    playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note
+  )
+
+
+HallOfFameUpdated &lt;- rbind(HallOfFame, hof_2025)
+
+head(HallOfFameUpdated, 10)</code></pre>
+<pre><code>##     playerID yearID votedBy ballots needed votes inducted category needed_note
+## 1  aaronha01   1982   BBWAA     415    312   406        Y   Player        &lt;NA&gt;
+## 2  abbotji01   2005   BBWAA     516    387    13        N   Player        &lt;NA&gt;
+## 3  abreubo01   2020   BBWAA     397    298    22        N   Player        &lt;NA&gt;
+## 4  abreubo01   2021   BBWAA     401    301    35        N   Player        &lt;NA&gt;
+## 5  abreubo01   2022   BBWAA     394    296    34        N   Player        &lt;NA&gt;
+## 6  abreubo01   2023   BBWAA     389    292    60        N   Player        &lt;NA&gt;
+## 7  abreubo01   2024   BBWAA     385    289    57        N   Player        &lt;NA&gt;
+## 8  abreubo01   2025   BBWAA     394    296    77        N   Player        &lt;NA&gt;
+## 9  adamsba01   1937   BBWAA     201    151     8        N   Player        &lt;NA&gt;
+## 10 adamsba01   1938   BBWAA     262    197    11        N   Player        &lt;NA&gt;</code></pre>
+<pre class="r"><code>#nrow(HallOfFameUpdated) == nrow(HallOfFame) + nrow(hof_2025)
+
+#HallOfFameUpdated |&gt;
+#  filter(yearID == &#39;2025&#39;) |&gt;
+#  arrange(playerID)</code></pre>
+<p>Now to write the CSV:</p>
+<pre class="r"><code>write_csv(hof_2025, file=&quot;HallOfFame2025.csv&quot;)</code></pre>
 
 
 
