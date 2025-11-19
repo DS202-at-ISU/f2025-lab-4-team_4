@@ -5,7 +5,90 @@ date: "2025-11-19"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+Target structure:
+| playerFullName | playerID | yearID | votedBy | ballots | needed | votes | inducted | category | needed_note |
+
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(rvest)
+library(dplyr)
+library(stringr)
+library(Lahman)
+
+# Preview Lahman structure
+head(HallOfFame, 3)
+
+# Open and read HTML table
+html <- read_html("https://www.baseball-reference.com/awards/hof_2025.shtml")
+hof_table <- html_elements(html, '#hof_BBWAA')
+
+# Convert html table → data frame
+hof_table_2025 <- html_table(hof_table)
+hof_2025 <- data.frame(hof_table_2025)
+
+# Fix header row
+columns <- hof_2025[1, ]            
+colnames(hof_2025) <- columns        
+hof_2025 <- hof_2025[-1, ]  
+
+# Keep relevant scraped columns
+hof_2025 <- hof_2025 |>
+  select(Name, Votes)
+
+head(hof_2025, 3)
+
+# Clean Name column for matching
+hof_2025 <- hof_2025 %>%
+  mutate(
+    playerFullName = Name,
+    cleanName = tolower(playerFullName),
+    Votes = as.numeric(Votes)
+  )
+
+# Prepare Lahman Master table
+people <- People %>%
+  mutate(
+    playerFullName_lahman = paste(nameFirst, nameLast),
+    cleanName = tolower(playerFullName_lahman)
+  ) %>%
+  select(playerID, cleanName)
+
+# Match scraped names to Lahman playerIDs
+hof_2025 <- hof_2025 %>%
+  left_join(people, by = "cleanName")
+
+# Check unmatched players
+hof_2025 %>% filter(is.na(playerID))
+
+# Scrape ballots cast (from page header)
+ballot_text <- html %>% html_nodes("p") %>% html_text()
+ballots_line <- ballot_text[str_detect(ballot_text, "Ballots")]
+ballots <- str_extract(ballots_line, "\\d+") %>% as.numeric()
+
+# Create Lahman-style fields
+ballots <- 394 # found on MLB website
+
+hof_2025_clean <- hof_2025 %>%
+  mutate(
+    yearID = 2025,
+    votedBy = "BBWAA",
+    ballots = ballots,
+    needed = ceiling(0.75 * ballots),
+    votes = Votes,
+    inducted = ifelse(votes >= needed, "Y", "N"),
+    category = "Player",
+    needed_note = NA
+  ) %>%
+  select(
+    playerFullName, playerID, yearID, votedBy,
+    ballots, needed, votes, inducted,
+    category, needed_note
+  )
+
+# Preview final data
+hof_2025_clean
+
 ```
+
 
