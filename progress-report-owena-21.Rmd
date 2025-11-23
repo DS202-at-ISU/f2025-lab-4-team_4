@@ -39,14 +39,24 @@ players <- People %>%
 
 data <- data %>%
   left_join(players, by = "Name") %>%
-  mutate(index = row_number())
+  mutate(index = row_number()) %>%
+  rename(votes = Votes) 
 
-data$YearID <- 2025
+print(unique(data$Name))
+
+data$yearID <- 2025
 data$votedBy <- "BBWAA"
 data$ballots <- 394
 data$needed <- 296
 data$category <- "Player"
+data$needed_note <- NA
+data$inducted <- if_else(data$votes > data$needed, "Y", "N")
+
+data <- data %>%
+  select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
   
 head(data)
+
+#write.csv(data, file = "lab4.csv", row.names = FALSE)
 
 ```

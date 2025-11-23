@@ -397,24 +397,42 @@ players &lt;- People %&gt;%
 
 data &lt;- data %&gt;%
   left_join(players, by = &quot;Name&quot;) %&gt;%
-  mutate(index = row_number())
+  mutate(index = row_number()) %&gt;%
+  rename(votes = Votes) 
 
-data$YearID &lt;- 2025
+print(unique(data$Name))</code></pre>
+<pre><code>##  [1] &quot;Ichiro Suzuki&quot;       &quot;CC Sabathia&quot;         &quot;Billy Wagner&quot;       
+##  [4] &quot;Carlos Beltrán&quot;      &quot;Andruw Jones&quot;        &quot;Chase Utley&quot;        
+##  [7] &quot;Alex Rodriguez&quot;      &quot;Manny Ramirez&quot;       &quot;Andy Pettitte&quot;      
+## [10] &quot;Félix Hernández&quot;     &quot;Bobby Abreu&quot;         &quot;Jimmy Rollins&quot;      
+## [13] &quot;Omar Vizquel&quot;        &quot;Dustin Pedroia&quot;      &quot;Mark Buehrle&quot;       
+## [16] &quot;Francisco Rodríguez&quot; &quot;David Wright&quot;        &quot;Torii Hunter&quot;       
+## [19] &quot;Ian Kinsler&quot;         &quot;Russell Martin&quot;      &quot;Brian McCann&quot;       
+## [22] &quot;Troy Tulowitzki&quot;     &quot;Adam Jones&quot;          &quot;Curtis Granderson&quot;  
+## [25] &quot;Carlos González&quot;     &quot;Ben Zobrist&quot;         &quot;Fernando Rodney&quot;    
+## [28] &quot;Hanley Ramírez&quot;</code></pre>
+<pre class="r"><code>data$yearID &lt;- 2025
 data$votedBy &lt;- &quot;BBWAA&quot;
 data$ballots &lt;- 394
 data$needed &lt;- 296
 data$category &lt;- &quot;Player&quot;
+data$needed_note &lt;- NA
+data$inducted &lt;- if_else(data$votes &gt; data$needed, &quot;Y&quot;, &quot;N&quot;)
+
+data &lt;- data %&gt;%
+  select(playerID, yearID, votedBy, ballots, needed, votes, inducted, category, needed_note)
   
 head(data)</code></pre>
-<pre><code>## # A tibble: 6 × 10
-##   Name       Votes `%vote` playerID index YearID votedBy ballots needed category
-##   &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;    &lt;int&gt;  &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
-## 1 Ichiro Su… 393   99.7%   suzukic…     1   2025 BBWAA       394    296 Player  
-## 2 CC Sabath… 342   86.8%   sabatcc…     2   2025 BBWAA       394    296 Player  
-## 3 Billy Wag… 325   82.5%   wagnebi…     3   2025 BBWAA       394    296 Player  
-## 4 Carlos Be… 277   70.3%   &lt;NA&gt;         4   2025 BBWAA       394    296 Player  
-## 5 Andruw Jo… 261   66.2%   jonesan…     5   2025 BBWAA       394    296 Player  
-## 6 Chase Utl… 157   39.8%   utleych…     6   2025 BBWAA       394    296 Player</code></pre>
+<pre><code>## # A tibble: 6 × 9
+##   playerID  yearID votedBy ballots needed votes inducted category needed_note
+##   &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;lgl&gt;      
+## 1 suzukic01   2025 BBWAA       394    296 393   Y        Player   NA         
+## 2 sabatcc01   2025 BBWAA       394    296 342   Y        Player   NA         
+## 3 wagnebi02   2025 BBWAA       394    296 325   Y        Player   NA         
+## 4 &lt;NA&gt;        2025 BBWAA       394    296 277   N        Player   NA         
+## 5 jonesan01   2025 BBWAA       394    296 261   N        Player   NA         
+## 6 utleych01   2025 BBWAA       394    296 157   N        Player   NA</code></pre>
+<pre class="r"><code>#write.csv(data, file = &quot;lab4.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 
 
